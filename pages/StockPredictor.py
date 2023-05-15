@@ -11,7 +11,7 @@ from datetime import date, timedelta
 
 import re
 import yfinance as yf 
-from prophet import Prophet 
+from prophet import prophet 
 from prophet.plot import plot_plotly 
 from plotly import graph_objs as go 
 
