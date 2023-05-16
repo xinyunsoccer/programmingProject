@@ -62,7 +62,7 @@ ticker = get_stock_ticker(company_name)
 
 """ # Function to assess if the Input for a Ticker is valid 
 def is_valid_ticker(ticker):
-    """Check if the ticker is valid."""
+    #Check if the ticker is valid.
     pattern = r'^[A-Z.]{1,6}$'  # match 1 to 5 uppercase letters
     return re.match(pattern, ticker)
 
