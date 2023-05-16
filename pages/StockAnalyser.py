@@ -59,6 +59,8 @@ data_load_state.text(f'Loading data for: {user_input} from {START} to {TODAY} is
 st.write('------------------------------------------------------------------------')
 
 # Section to Display a summary of the company
+st.subheader('Raw Data')
+st.write(data.head())
 
 # Get Ticker object for the given ticker
 ticker_info = yf.Ticker(user_input)
