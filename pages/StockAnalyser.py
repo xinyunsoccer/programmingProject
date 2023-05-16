@@ -45,7 +45,7 @@ user_input = st.text_input('Enter Company Name', 'AAPL')
 if not is_valid_ticker(user_input):
     st.warning('Please enter a valid stock ticker (e.g. AAPL)')
 
-@st.cache_data
+
 def load_data(ticker, START): 
     data = yf.download(ticker, start=START, end=TODAY, repair=True)
     data.reset_index(inplace=True)
