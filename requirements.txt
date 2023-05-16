@@ -1,7 +1,9 @@
 
 datetime 
 yfinance 
-prophet 
 plotly 
 scipy
+pandas
+scikit-learn
+requests
 
