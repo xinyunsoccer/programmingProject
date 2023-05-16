@@ -3,4 +3,5 @@ datetime
 yfinance 
 prophet 
 plotly 
+scipy
 
