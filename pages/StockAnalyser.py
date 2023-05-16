@@ -7,7 +7,7 @@ Created on Thu May 11 11:07:56 2023
 """
 
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date
 import re
 import yfinance as yf
 from plotly import graph_objs as go
@@ -18,7 +18,7 @@ st.title("💰🚀 Stock Analyser App 🚀💰")
 
 # Set the minimum and maximum start date values
 min_date = date(2010, 1, 1)
-max_date = date.today() - timedelta(days=1)
+max_date = date.today()
 
 # Get the start date from the user using a slider
 START= st.slider(
