@@ -12,6 +12,17 @@ import re
 import yfinance as yf
 from plotly import graph_objs as go
 
+# Function to assess if the Input for a Ticker is valid 
+def is_valid_ticker(ticker):
+    #Check if the ticker is valid.
+    pattern = r'^[A-Z.]{1,6}$'  # match 1 to 5 uppercase letters
+    return re.match(pattern, ticker)
+
+def load_data(ticker, START): 
+    data = yf.download(ticker, start=START, end=TODAY, repair=True)
+    data.reset_index(inplace=True)
+    return data
+
 
 st.title("💰🚀 Stock Analyser App 🚀💰")
 
@@ -34,22 +45,10 @@ st.write('Start date selected:', START.strftime('%Y-%m-%d'))
 
 TODAY = date.today().strftime('%Y-%m-%d')
 
-# Function to assess if the Input for a Ticker is valid 
-def is_valid_ticker(ticker):
-    #Check if the ticker is valid.
-    pattern = r'^[A-Z.]{1,6}$'  # match 1 to 5 uppercase letters
-    return re.match(pattern, ticker)
-
 # Check if user_input is valid and return a warning message otherwise 
 user_input = st.text_input('Enter Company Name', 'AAPL')
 if not is_valid_ticker(user_input):
     st.warning('Please enter a valid stock ticker (e.g. AAPL)')
-
-
-def load_data(ticker, START): 
-    data = yf.download(ticker, start=START, end=TODAY, repair=True)
-    data.reset_index(inplace=True)
-    return data
 
 
 data_load_state = st.text(f"Loading data for: {user_input} from {START} to {TODAY}...")
