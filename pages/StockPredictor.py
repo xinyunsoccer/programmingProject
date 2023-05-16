@@ -5,14 +5,16 @@ Created on Thu May 11 11:07:56 2023
 
 @author: lucas
 """
+import requests
+import json
 import streamlit as st
-from datetime import date, timedelta
-
-import re
+from datetime import date 
+import pandas as pd
 import yfinance as yf 
 from prophet import Prophet 
 from prophet.plot import plot_plotly 
 from plotly import graph_objs as go 
+API_KEY = 'YB3L9H497PDWJJ5K4'
 
 st.title("💰🚀 Stock Predictor App 🚀💰")
 
@@ -34,9 +36,31 @@ START= st.slider(
 st.write('Start date selected:', START.strftime('%Y-%m-%d'))
 
 TODAY = date.today().strftime('%Y-%m-%d')
+def get_stock_ticker(company_name):
+    url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={company_name}&apikey={API_KEY}'
+    response = requests.get(url)
+    data = response.json()
 
+    if 'bestMatches' not in data:
+        print(f"No results found for '{company_name}'.")
+        return None
 
-# Function to assess if the Input for a Ticker is valid 
+    matches = data['bestMatches']
+    if len(matches) == 0:
+        print(f"No results found for '{company_name}'.")
+        return None
+
+    best_match = matches[0]
+    ticker = best_match['1. symbol']
+    name = best_match['2. name']
+    print(f"Best Match for '{company_name}': {ticker} ({name})")
+
+    return ticker
+
+company_name = st.text_input("Enter company name", 'Apple Inc')
+ticker = get_stock_ticker(company_name)
+
+""" # Function to assess if the Input for a Ticker is valid 
 def is_valid_ticker(ticker):
     """Check if the ticker is valid."""
     pattern = r'^[A-Z.]{1,6}$'  # match 1 to 5 uppercase letters
@@ -46,6 +70,12 @@ def is_valid_ticker(ticker):
 user_input = st.text_input('Enter Stock Ticker', 'AAPL')
 if not is_valid_ticker(user_input):
     st.warning('Please enter a valid stock ticker (e.g. AAPL)')
+"""
+if ticker is not None:
+    selected_stock = ticker
+    st.write(f'Selected stock for prediction is {selected_stock}')
+else:
+    st.error(f"No results found for '{company_name}'.")
 
 n_years = st.slider('Years of prediction:', 1, 4)
 period = n_years*365
