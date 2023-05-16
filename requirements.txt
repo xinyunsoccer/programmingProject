@@ -1,5 +1,5 @@
 
 datetime 
 yfinance 
-prophet 
+Prophet 
 plotly 
