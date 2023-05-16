@@ -5,9 +5,6 @@ Created on Thu May 11 11:07:56 2023
 
 @author: lucas
 """
-pip install --upgrade holidays
-
-
 import streamlit as st
 from datetime import date, timedelta
 
