@@ -3,4 +3,4 @@ datetime
 yfinance 
 prophet 
 plotly 
-holidays
+
