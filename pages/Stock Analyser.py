@@ -110,7 +110,6 @@ else:
 
 
 st.write('------------------------------------------------------------------------')
-
 # Section to Display a summary of the company
 
 # Retrieve the name of the stock
@@ -124,7 +123,6 @@ st.subheader(f'Summary of {stock_name}:')
 st.write(company_summary)
 
 st.write('------------------------------------------------------------------------')
-
 # Section to visiualize the stock performance 
 
 # plot the stock performance 
@@ -165,10 +163,8 @@ def calculate_moving_averages(data):
 calculate_moving_averages(data)
 
 st.write('------------------------------------------------------------------------')
-
 # Section to display KPIs of the stock
 st.subheader(f'Key Performance Indicators of {stock_name}:')
-
 
 # Extract the relevant KPIs
 market_cap = ticker_info.info['marketCap']
@@ -176,7 +172,6 @@ pe_ratio = ticker_info.info['trailingPE']
 earnings = ticker_info.info['trailingEps']
 current_price = ticker_info.info['ask']
 beta = ticker_info.info['beta']
-
 
 # Format the numbers
 formatted_market_cap = '{:,.2f}'.format(market_cap) + ' USD'
@@ -198,10 +193,21 @@ holders = ticker_info.institutional_holders
 # Filter the top 5 major holders
 top_holders = holders.head(5)
 
-# Create a bar plot of the major holders
-st.write(f'Major Holders of {stock_name}:')
-chart_data = top_holders.set_index('Holder')['% Out']
-st.bar_chart(chart_data)
+# Function to plot a bar chart with the major holders of the selected company
+def plot_major_holders(stock_name, top_holders):
+    st.write(f'Major Holders of {stock_name}:')
+    chart_data = top_holders.set_index('Holder')['% Out']
+
+    # Create a bar chart using Plotly
+    fig = go.Figure(data=[go.Bar(x=chart_data.index, y=chart_data.values)])
+    fig.update_layout(
+        title=f"Major Holders of {stock_name}",
+        xaxis_title="Holder",
+        yaxis_title="% Ownership",
+    )
+    st.plotly_chart(fig) # Display the chart using st.plotly_chart()
+
+plot_major_holders(stock_name, top_holders)
 
 st.write('------------------------------------------------------------------------')
 
