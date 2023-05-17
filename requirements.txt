@@ -8,5 +8,5 @@ scikit-learn
 requests
 matplotlib
 numpy
-pypfopt
+PyPortfolioOpt
 seaborn
