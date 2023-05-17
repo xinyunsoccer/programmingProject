@@ -48,8 +48,8 @@ def plot_efficient_frontier_and_max_sharpe(mu, S):
 	ax.legend()
 	return fig
 
-st.set_page_config(page_title = "Portfolio Optimizer", layout = "wide")
-st.header("Portfolio Optimizer")
+st.set_page_config(page_title = "⚙️📈 Stock Portfolio Optimizer 📈⚙️", layout = "wide")
+st.header("⚙️📈 Stock Portfolio Optimizer 📈⚙️")
 
 col1, col2 = st.columns(2)
 
