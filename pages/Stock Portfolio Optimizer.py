@@ -60,7 +60,7 @@ start_date = date(2010, 1, 1)
 end_date = date.today()
 
 # Create a slider to select the date range
-selected_range = st.slider("Select a date range", min_value=start_date, max_value=end_date, value=start_date)
+selected_range = st.slider("Select a date range", min_value=start_date, max_value=end_date, value=2015, 1, 1)
 
 # Display the selected date range
 st.write("You selected the following date range:", selected_range, "to", end_date)
