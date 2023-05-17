@@ -11,7 +11,8 @@ import streamlit as st
 st.set_page_config(
     page_title='🚀📈 Stock Analytics and Portfolio App 📈🚀',
     page_icon="📈", 
-    initial_sidebar_state='expanded'
+    initial_sidebar_state='expanded', 
+    layout = 'wide'
     )
 
 st.title(' 🚀📈 Stock Analytics and Portfolio App 📈🚀')
