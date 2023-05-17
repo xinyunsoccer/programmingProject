@@ -17,14 +17,16 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 register_matplotlib_converters()
 
+# with this API key we can query the Alpha Vantage API
 API_KEY = 'YB3L9H497PDWJJ5K4'
 
+# Set the title for the Streamlit app 
 st.title("💰🚀 Stock Analyser App 🚀💰")
 
 
-# Set the minimum and maximum start date values
+# Set the minimum and maximum start date values the max_date is the day before yesterday 
 min_date = date(2010, 1, 1)
-max_date = date.today()-timedelta(days=1)
+max_date = date.today()-timedelta(days=2)
 
 # Get the start date from the user using a slider
 START= st.slider(
@@ -38,22 +40,29 @@ START= st.slider(
 # Print the selected start date
 st.write('Start date selected:', START.strftime('%Y-%m-%d'))
 
+# Get the current date 
 TODAY = date.today().strftime('%Y-%m-%d')
 
+# Function to get the stock ticker for the company name which the user inserted 
 def get_stock_ticker(company_name):
+    # Query the Alpha Vantage API to get the stock ticker info 
     url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={company_name}&apikey={API_KEY}'
     response = requests.get(url)
     data = response.json()
 
     if 'bestMatches' not in data:
+         # If no matching results found, print an error message and return None
         print(f"No results found for '{company_name}'.")
         return None
+    
 
     matches = data['bestMatches']
     if len(matches) == 0:
+        # If no matches found, print an error message and return None
         print(f"No results found for '{company_name}'.")
         return None
 
+     # Extract the best match (first match) from the response
     best_match = matches[0]
     ticker = best_match['1. symbol']
     name = best_match['2. name']
@@ -61,27 +70,40 @@ def get_stock_ticker(company_name):
 
     return ticker
 
+# Prompt the user to enter the company name (with a default value of 'Apple Inc')
 company_name = st.text_input("Enter company name (If this does not work you need to enter the Stock Ticker directly)", 'Apple Inc')
+
+# Get the stock ticker for the entered company name by calling the function
 ticker = get_stock_ticker(company_name)
 
+# Check if a valid ticker is obtained
 if ticker is not None:
     selected_stock = ticker
-    st.write(f'Selected stock for prediction is {selected_stock}')
+     # Display the selected stock 
+    st.write(f'Selected stock is {selected_stock}')
 else:
-    st.error(f"No results found for '{company_name}'.")
+    # Display an error message if no ticker is found for the entered company name and ask user to insert the right ticker symbol
+    st.error(f"No results found for '{company_name}' please insert the ticker directly.")
 
 
+# Function to load the stock data 
 def load_data(ticker, START): 
+    # Load historical stock data using Yahoo Finance API for the specified ticker and date range
     data = yf.download(ticker, start=START, end=TODAY, repair=True)
     data.reset_index(inplace=True)
     return data
 
+# Display a text message indicating the loading state
 data_load_state = st.text(f"Loading data for: {company_name} ({ticker}) from {START} to {TODAY}...")
+# Load the stock data for the selected stock and date range
 data = load_data(ticker, START) 
 
+# Check if the loaded data is valid and sufficient
 if data.shape[0] < 2 or data.isna().sum().sum() > 0:
+     # Display an error message if the data is insufficient or invalid
     st.error(f"Insufficient or invalid data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range.")
 else:
+    # Display a success message if the data loading is successful
     data_load_state.text(f'Loading data for: {company_name} from {START} to {TODAY} is done!')
     # Get Ticker object for the given ticker
     ticker_info = yf.Ticker(ticker)
@@ -109,17 +131,18 @@ st.write('----------------------------------------------------------------------
 st.subheader(f'Stock Performance of {stock_name}:')
 st.write(f'In this section you can see how {stock_name} performed over time. Moreover, you can see the opening and closing price. By moving the slider below the chart you can zoom into specific time frames.')
 def plot_raw_data(): 
+    # Plot the raw data, including opening and closing price 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='stock_open'))
     fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='stock_close'))
     fig.layout.update(title_text=f'Performance of {stock_name} stock over time', xaxis_rangeslider_visible=True)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig) # Display the figure using plotly_chart()
     
 plot_raw_data()
 
 # Plot the moving averages of the stock
 def calculate_moving_averages(data):
-    """Calculate and plot the 50-day and 200-day moving averages."""
+    #Calculate and plot the 50-day and 200-day moving averages
     data['MA50'] = data['Close'].rolling(window=50).mean()
     data['MA200'] = data['Close'].rolling(window=200).mean()
 
@@ -131,12 +154,13 @@ def calculate_moving_averages(data):
     fig.add_trace(go.Scatter(x=data['Date'], y=data['MA50'], name='50-day Moving Average'))
     fig.add_trace(go.Scatter(x=data['Date'], y=data['MA200'], name='200-day Moving Average'))
 
+    # Update layout with title, axes labels, and range slider visibility
     fig.update_layout(title='Moving Averages: 50-day & 200-day',
                       xaxis_title='Date',
                       yaxis_title='Price', 
-                      xaxis_rangeslider_visible=True)
+                      xaxis_rangeslider_visible=True) 
 
-    st.plotly_chart(fig)
+    st.plotly_chart(fig) # Display the figure using plotly_chart()
 
 calculate_moving_averages(data)
 
@@ -168,15 +192,7 @@ st.write(f"Earnings per Share: {formatted_earnings}")
 st.write(f"Current Price: {formatted_current_price}")
 st.write(f"Beta: {formatted_beta}")
 
-
-# Retrieve major holders
-holders = ticker_info.institutional_holders
-
-# Filter the top 5 major holders
-top_holders = holders.head(5)
-
-# Create a bar plot of the major holders
-# Retrieve major holders
+# Retrieve major institutional holders
 holders = ticker_info.institutional_holders
 
 # Filter the top 5 major holders
