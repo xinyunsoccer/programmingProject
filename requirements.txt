@@ -6,4 +6,7 @@ scipy
 pandas
 scikit-learn
 requests
-
+matplotlib
+numpy
+pypfopt
+seaborn
