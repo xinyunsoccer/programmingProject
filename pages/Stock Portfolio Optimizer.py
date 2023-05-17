@@ -54,10 +54,10 @@ st.header("Portfolio Optimizer")
 col1, col2 = st.columns(2)
 
 # Set the start date to January 1, 2010
-start_date = datetime.date(2010, 1, 1)
+start_date = date(2010, 1, 1)
 
 # Set the end date to today's date
-end_date = datetime.date.today()
+end_date = date.today()
 
 # Create a slider to select the date range
 selected_range = st.slider("Select a date range", min_value=start_date, max_value=end_date, value=start_date)
