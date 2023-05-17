@@ -17,7 +17,7 @@ from pypfopt import EfficientFrontier
 from pypfopt import risk_models
 from pypfopt import expected_returns
 from pypfopt import plotting
-from datetime import datetime
+from datetime import date
 from io import BytesIO
 
 
@@ -53,8 +53,8 @@ st.header("Portfolio Optimizer")
 
 col1, col2 = st.columns(2)
 
-# Set the start date to January 1, 2013
-start_date = datetime.date(2013, 1, 1)
+# Set the start date to January 1, 2010
+start_date = datetime.date(2010, 1, 1)
 
 # Set the end date to today's date
 end_date = datetime.date.today()
