@@ -312,14 +312,7 @@ def plot_forecast(data, forecast):
                       xaxis_rangeslider_visible=True)
     fig.show()
 
-
-# Load and validate the data
-#data = load_data(ticker, START)
-#assert data.shape[0] > 2, f"Insufficient data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
-#assert data.isna().sum().sum() == 0, f"Invalid data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
-
-
-
+# Create Subheader and Description for the Predictor 
 st.subheader('Stock Price Forecast (Random Forest Regressor)')
 st.write('The stock price predictor uses the Random Forest Regressor algorithm which analyses historical price patterns to forecast the future performance of a stock. Please note that future prices are influenced by many other factors and this is just a prediction of how the price could look like in the future based on past performance')
 
