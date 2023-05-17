@@ -21,7 +21,10 @@ register_matplotlib_converters()
 API_KEY = 'YB3L9H497PDWJJ5K4'
 
 # Set the title for the Streamlit app 
-st.title("💰🚀 Stock Analyser App 🚀💰")
+
+st.set_page_config(page_title = "🕵️📈 Stock Analyser App 📈🕵️", layout = "wide")
+st.header("🕵️📈 Stock Analyser App 📈🕵️")
+
 
 
 # Set the minimum and maximum start date values the max_date is the day before yesterday 
