@@ -136,6 +136,7 @@ def plot_raw_data():
     fig.layout.update(title_text=f'Performance of {stock_name} stock over time', xaxis_rangeslider_visible=True)
     st.plotly_chart(fig) # Display the figure using plotly_chart()
     
+# call the function
 plot_raw_data()
 
 # Plot the moving averages of the stock
@@ -160,6 +161,7 @@ def calculate_moving_averages(data):
 
     st.plotly_chart(fig) # Display the figure using plotly_chart()
 
+# call the function 
 calculate_moving_averages(data)
 
 st.write('------------------------------------------------------------------------')
@@ -207,17 +209,18 @@ def plot_major_holders(stock_name, top_holders):
     )
     st.plotly_chart(fig) # Display the chart using st.plotly_chart()
 
+# Call the function
 plot_major_holders(stock_name, top_holders)
 
 st.write('------------------------------------------------------------------------')
-
-
 # Section to plot the stock performance compared to a benchmark indice
-
 st.subheader(f'Stock Performance of {stock_name} compared to a Benchmark Indice')
 st.write(f'In this section you can see how {stock_name} performed against a Benchmark indice of your choice over a specified time horizon.')
-# Benchmark Stock to an indice
+
+# Create a list of Benchmark indices
 benchmark_indices = ['S&P 500', 'NASDAQ', 'Dow Jones Industrial Average', 'FTSE 100', 'Nikkei 225', 'DAX', 'SIX']
+
+# Create a dropdown menu so that the user can selected one of the benchmark indices
 selected_index = st.selectbox('Select Benchmark Index', benchmark_indices)
 if selected_index == 'S&P 500':
     benchmark_ticker = '^GSPC'  # Ticker symbol for S&P 500
@@ -240,27 +243,18 @@ benchmark_data = yf.download(benchmark_ticker, start=START, end=TODAY)
 # plot the benchmark indice against the stock data
 def plot_benchmark():
     fig = go.Figure()
-    
-    # Add stock data
     fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='Stock Close', yaxis='y1', line=dict(color='blue')))
-    
-    # Add benchmark index data
     fig.add_trace(go.Scatter(x=benchmark_data.index, y=benchmark_data['Close'], name='Benchmark Close', yaxis='y2', line=dict(color='red')))
-    
-    
-    # Configure y-axes
     fig.update_layout(yaxis=dict(title='Stock Price', side='left', showgrid=False),
                       yaxis2=dict(title='Benchmark Index', side='right', overlaying='y', showgrid=False),  legend=dict(x=0, y=1))
-    
     fig.layout.update(title_text=f'Performance of {stock_name} vs Benchmark Index', xaxis_rangeslider_visible=True)
-    st.plotly_chart(fig)
+    st.plotly_chart(fig) # Display the chart using st.plotly_chart()
 
+# Call the function
 plot_benchmark()
 
 st.write('------------------------------------------------------------------------')
-
 # section to predict the future performance of the stock 
-
 
 # Prepare the data for Random Forest Regressor
 def prepare_data(df):
@@ -320,9 +314,9 @@ def plot_forecast(data, forecast):
 
 
 # Load and validate the data
-data = load_data(ticker, START)
-assert data.shape[0] > 2, f"Insufficient data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
-assert data.isna().sum().sum() == 0, f"Invalid data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
+#data = load_data(ticker, START)
+#assert data.shape[0] > 2, f"Insufficient data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
+#assert data.isna().sum().sum() == 0, f"Invalid data for: {company_name} from {START} to {TODAY}. Please try another ticker or date range."
 
 
 
