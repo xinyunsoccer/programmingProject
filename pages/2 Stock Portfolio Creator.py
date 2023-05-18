@@ -1,10 +1,11 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 from datetime import date, timedelta
-
 
 # Set the title for the Streamlit app 
 st.set_page_config(page_title = "⚒️📈 Stock Portfolio Creator 📈⚒️", layout = "wide")
@@ -91,64 +92,6 @@ if stocks_df is not None:
     fig_cum_returns_ind = plot_cum_returns(stocks_df, 'Cumulative Returns of Individual Stocks Starting with $100')
     st.plotly_chart(fig_cum_returns_ind)
     
-    
-    # Add a line to separate subheaders
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    
-    # Header for risk-return tradeoff chart
-    st.subheader('Risk-Return Tradeoff of individual Stocks in Portfolio')
-    st.write('In this section the bubble chart illustrates the tradeoff between the risk and return of your stocks. The x-axis shows the average annual return of the stocks and the y-axis its volatility. The bubble size represents the Sharpe Ratio. To use this chart, please adjust the risk free rate.')
-    
-    # Slider to adjust the risk free rate for the sharpe ratio 
-    risk_free_rate = st.slider(
-        'Adjust realistic Risk-Free Rate for Sharpe Ratio',
-        min_value=0.0,
-        max_value=0.1,
-        value=0.02,
-        step=0.01
-        )
-    
-    # Calculate risk-adjusted measures
-    daily_returns = stocks_df.pct_change()
-    annual_returns = daily_returns.mean() * 252  # Assuming 252 trading days in a year
-    annual_volatility = daily_returns.std() * (252 ** 0.5)  # Assuming 252 trading days in a year
-    sharpe_ratio = (annual_returns - risk_free_rate) / annual_volatility
-
-    # Create a DataFrame to store the risk-return tradeoff data
-    tradeoff_data = pd.DataFrame({'Ticker': tickers[:len(stocks_dict)],
-                                  'Annual Return': annual_returns[:len(stocks_dict)],
-                                  'Volatility': annual_volatility[:len(stocks_dict)],
-                                  'Sharpe Ratio': sharpe_ratio[:len(stocks_dict)]})
-
-    # Filter the DataFrame to include only tickers with available data
-    tradeoff_data = tradeoff_data[tradeoff_data['Ticker'].isin(stocks_dict.keys())]
-
-    # Check if there are any tickers with missing data
-    missing_tickers = set(tickers) - set(tradeoff_data['Ticker'])
-
-    # Display the tickers with missing data
-    if missing_tickers:
-        st.write('The following tickers have missing data:')
-        st.write(missing_tickers)
-    else:
-        # Create a bubble chart to visualize the risk-return tradeoff
-        fig_tradeoff = px.scatter(tradeoff_data,
-                                  x='Annual Return',
-                                  y='Volatility',
-                                  size='Sharpe Ratio',
-                                  color='Ticker',
-                                  hover_data=['Ticker'],
-                                  title='Risk-Return Tradeoff for the Portfolio')
-
-        # Set the x-axis and y-axis labels
-        fig_tradeoff.update_layout(xaxis_title='Annual Return',
-                                   yaxis_title='Volatility')
-
-        # Display the risk-return tradeoff chart
-        st.plotly_chart(fig_tradeoff)
-
-    
     # Add a line to separate subheaders
     st.markdown("<hr>", unsafe_allow_html=True)
     
@@ -214,25 +157,21 @@ if stocks_df is not None:
     # Format the drawdown duration
     drawdown_duration_str = str(drawdown_duration) + " days"
     
-    # Calculate sharpe ratio 
-    portfolio_returns = stocks_df['Manually Adjusted Portfolio'].pct_change()
-    portfolio_volatility = portfolio_returns.std() * (252 ** 0.5)  # Assuming 252 trading days in a year
-
-    portfolio_excess_returns = portfolio_returns - risk_free_rate
-    sharpe_ratio = portfolio_excess_returns.mean() / portfolio_volatility
-    
     # Add a line to separate subheaders
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # Display average annual return, volatility, standard deviation, downside deviation, maximum drawdown, drawdown duration, sharpe ratio 
     st.subheader("Past Performance Measures of Portfolio in the selected Timeframe from" + " " + start_date_str + " to " + end_date_str + "")
+    
+    
+    
     st.write("Average Annual Portfolio Return:", round(average_annual_return*100, 2),"%", unsafe_allow_html=True, style={"color": "white"})
     st.write("Average Annual Portfolio Volatility:", round(average_annual_volatility*100, 2), "%", unsafe_allow_html=True, style={"color": "white"})
     st.write("Standard Deviation:", round(portfolio_std_dev * 100, 2), "%", unsafe_allow_html=True, style={"color": "white"})
     st.write("Downside Deviation:", round(downside_deviation * 100, 2), "%", unsafe_allow_html=True, style={"color": "white"})
     st.write("Maximum Drawdown:", max_drawdown, "%", unsafe_allow_html=True, style={"color": "white"})
     st.write("Drawdown Duration:", drawdown_duration_str, unsafe_allow_html=True, style={"color": "white"})
-    st.write("Sharpe Ratio:", round(sharpe_ratio, 2), "%", unsafe_allow_html=True, style={"color": "white"})
+    
 
     # Add a line to separate subheaders
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -246,6 +185,112 @@ if stocks_df is not None:
     # Display the plot of cumulative returns
     st.plotly_chart(fig_cum_returns)
     
+    # Header for risk-return tradeoff chart
+    st.subheader('Risk-Return Tradeoff of individual Stocks in Portfolio')
+    
+    # Display the description with bullet point enumeration
+    st.markdown('In this section the bubble chart illustrates the tradeoff between the risk and return of your stocks. To use this chart, please adjust the risk free rate.')
+    st.markdown('- The x-axis shows the annual return of the stocks.')
+    st.markdown('- The y-axis shows the volatility of the stocks.')
+    st.markdown('- The size of the element represents the weight of the stock in the portfolio.')
+    st.markdown('- The shape of the element represents the Sharpe Ratio. Triangle is < 0.1 | Cross is 0.1 < 0.4 | Circle is 0.4 < 0.8 | Diamond-Star is > 0.8')
+    
+    # Slider to adjust the risk free rate for the sharpe ratio 
+    risk_free_rate = st.slider(
+        'Adjust realistic Risk-Free Rate for Sharpe Ratio',
+        min_value=0.0,
+        max_value=0.1,
+        value=0.02,
+        step=0.01, 
+        key="risk_free_rate2_slider"
+        )
+    
+    # Calculate risk-adjusted measures
+    daily_returns = stocks_df.pct_change()
+    annual_returns = daily_returns.mean() * 252  # Assuming 252 trading days in a year
+    annual_volatility = daily_returns.std() * (252 ** 0.5)  # Assuming 252 trading days in a year
+    sharpe_ratio = (annual_returns - risk_free_rate) / annual_volatility
+
+    # Create a DataFrame to store the risk-return tradeoff data
+    tradeoff_data = pd.DataFrame({
+        'Ticker': tickers[:len(stocks_dict)],
+        'Annual Return': annual_returns[:len(stocks_dict)],
+        'Volatility': annual_volatility[:len(stocks_dict)],
+        'Weights': weights_df['weights'].values[:len(stocks_dict)],
+        'Sharpe Ratio': sharpe_ratio[:len(stocks_dict)]
+    })
+
+    # Filter the DataFrame to include only tickers with available data
+    tradeoff_data = tradeoff_data[tradeoff_data['Ticker'].isin(stocks_dict.keys())]
+    
+    # Check if there are any tickers with missing data
+    missing_tickers = set(tickers) - set(tradeoff_data['Ticker'])
+
+    # Display the tickers with missing data
+    if missing_tickers:
+        st.write('The following tickers have missing data:')
+        st.write(missing_tickers)
+    else:
+        # Assign different shapes to Sharpe ratio ranges
+        def assign_shape(sharpe):
+            if sharpe < 0.1:
+                return 'triangle-down'
+            elif 0.1 <= sharpe < 0.4:
+                return 'x'
+            elif 0.4 <= sharpe < 0.8:
+                return 'circle'
+            elif 0.8 <= sharpe <= 5.0:
+                return 'star-diamond'
+
+        # Map Sharpe ratios to shapes
+        tradeoff_data['Shape'] = tradeoff_data['Sharpe Ratio'].apply(assign_shape)
+
+        colors = tradeoff_data['Ticker'].map(lambda ticker: ord(ticker[0]) % 10)  # Map tickers to a color index
+
+        # Create a bubble chart to visualize the risk-return tradeoff
+        fig_tradeoff = go.Figure()
+
+        for i, row in tradeoff_data.iterrows():
+            fig_tradeoff.add_trace(
+                go.Scatter(
+                    x=[row['Annual Return']],
+                    y=[row['Volatility']],
+                    mode='markers',
+                    name=row['Ticker'],  # Set the name of the trace to the ticker
+                    marker=dict(
+                        size=np.sqrt(row['Weights']) * 200,  # Adjust the size of the bubble based on the weight
+                        sizemode='diameter',
+                        sizeref=0.1,
+                        sizemin=5,
+                        symbol=[assign_shape(row['Sharpe Ratio'])], # Use different shapes based on the Sharpe ratio
+                        line=dict(
+                            width=1,
+                            color='black'
+                        ),
+                        color=colors[i],  # Assign different colors based on the ticker index
+                        colorscale='Jet',  # Choose a colorscale for the bubbles
+                        opacity=0.8,
+                    ),
+                    hovertemplate='<b>Ticker:</b> ' + row['Ticker'] +
+                          '<br><b>Annual Return:</b> %{x}' +
+                          '<br><b>Volatility:</b> %{y}' +
+                          '<br><b>Weight:</b> ' + str(row['Weights']) +
+                          '<br><b>Sharpe Ratio:</b> ' + str(row['Sharpe Ratio']),
+                )
+            )
+
+    # Set the x-axis and y-axis labels
+    fig_tradeoff.update_layout(
+        xaxis_title='Annual Return',
+        yaxis_title='Volatility',
+        title='Risk-Return Tradeoff for the Portfolio',
+        showlegend=True,
+        height=600,
+    )
+
+    # Display the risk-return tradeoff chart
+    st.plotly_chart(fig_tradeoff)
+
 else:
     st.write("No data available for the selected stocks.")
 
@@ -295,4 +340,5 @@ for measure, explanation in explanations.items():
 
     # Add a subheader separator after each measure's explanation
     st.subheader('')
+
 
