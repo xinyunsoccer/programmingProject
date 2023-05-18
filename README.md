@@ -1,4 +1,4 @@
-# programmingProject
+# Programming Project
 This is the repository for our Programming Project for the course Programming with advanced Programming Languages
 
 Open this link to get redirected to our streamlit app: https://yungrangerover99-programmingproject-stockapphomepage-sws5ey.streamlit.app
