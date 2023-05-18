@@ -35,7 +35,7 @@ TODAY = date.today().strftime('%Y-%m-%d')
 
 
 # Prompt the user to enter stock tickers separated by commas and convert them to uppercase
-tickers_string = st.text_input('Enter all stock tickers to be included in portfolio separated by commas, e.g. "MA,FB,V,AMZN,JPM,BA"', '.').upper()
+tickers_string = st.text_input('Enter all stock tickers to be included in portfolio separated by commas, e.g. "MA,FB,V,AMZN,JPM,BA."', '').upper()
 
 # Split the tickers string using commas to create a list of tickers
 tickers = tickers_string.split(',')
@@ -48,11 +48,15 @@ for ticker in tickers:
         stock = yf.download(ticker, start=START, end=TODAY, repair=True)
         stocks_dict[ticker] = stock['Adj Close']
     except:
-        st.write(f"Could not fetch data for {ticker}")
+        st.write("Could not fetch data.")
 
+# Display the sentence indicating the number of stocks and the list of stocks in the portfolio
+if stocks_dict:
+    num_stocks = len(stocks_dict)
+    stock_list = ', '.join(tickers)
+    st.subheader("Your Portfolio consists of {} Stocks: {}. Each Stock Price in the selected Timeframe is shown below".format(num_stocks, stock_list))  
 
 # Combine the stock prices into a single DataFrame
-st.subheader("Your Portfolio consists of {} Stocks. Each Stock Price in the selected Timeframe is shown below".format(tickers_string))    
 if stocks_dict:
     stocks_df = pd.concat(stocks_dict.values(), axis=1, keys=stocks_dict.keys())
     st.write(stocks_df.head())
@@ -87,8 +91,67 @@ if stocks_df is not None:
     fig_cum_returns_ind = plot_cum_returns(stocks_df, 'Cumulative Returns of Individual Stocks Starting with $100')
     st.plotly_chart(fig_cum_returns_ind)
     
+    
     # Add a line to separate subheaders
     st.markdown("<hr>", unsafe_allow_html=True)
+    
+    
+    # Header for risk-return tradeoff chart
+    st.subheader('Risk-Return Tradeoff of individual Stocks in Portfolio')
+    st.write('In this section the bubble chart illustrates the tradeoff between the risk and return of your stocks. The x-axis shows the average annual return of the stocks and the y-axis its volatility. The bubble size represents the Sharpe Ratio. To use this chart, please adjust the risk free rate.')
+    
+    # Slider to adjust the risk free rate for the sharpe ratio 
+    risk_free_rate = st.slider(
+        'Adjust realistic Risk-Free Rate for Sharpe Ratio',
+        min_value=0.0,
+        max_value=0.1,
+        value=0.02,
+        step=0.01
+        )
+    
+    # Calculate risk-adjusted measures
+    daily_returns = stocks_df.pct_change()
+    annual_returns = daily_returns.mean() * 252  # Assuming 252 trading days in a year
+    annual_volatility = daily_returns.std() * (252 ** 0.5)  # Assuming 252 trading days in a year
+    sharpe_ratio = (annual_returns - risk_free_rate) / annual_volatility
+
+    # Create a DataFrame to store the risk-return tradeoff data
+    tradeoff_data = pd.DataFrame({'Ticker': tickers[:len(stocks_dict)],
+                                  'Annual Return': annual_returns[:len(stocks_dict)],
+                                  'Volatility': annual_volatility[:len(stocks_dict)],
+                                  'Sharpe Ratio': sharpe_ratio[:len(stocks_dict)]})
+
+    # Filter the DataFrame to include only tickers with available data
+    tradeoff_data = tradeoff_data[tradeoff_data['Ticker'].isin(stocks_dict.keys())]
+
+    # Check if there are any tickers with missing data
+    missing_tickers = set(tickers) - set(tradeoff_data['Ticker'])
+
+    # Display the tickers with missing data
+    if missing_tickers:
+        st.write('The following tickers have missing data:')
+        st.write(missing_tickers)
+    else:
+        # Create a bubble chart to visualize the risk-return tradeoff
+        fig_tradeoff = px.scatter(tradeoff_data,
+                                  x='Annual Return',
+                                  y='Volatility',
+                                  size='Sharpe Ratio',
+                                  color='Ticker',
+                                  hover_data=['Ticker'],
+                                  title='Risk-Return Tradeoff for the Portfolio')
+
+        # Set the x-axis and y-axis labels
+        fig_tradeoff.update_layout(xaxis_title='Annual Return',
+                                   yaxis_title='Volatility')
+
+        # Display the risk-return tradeoff chart
+        st.plotly_chart(fig_tradeoff)
+
+    
+    # Add a line to separate subheaders
+    st.markdown("<hr>", unsafe_allow_html=True)
+    
     
     # Display subheader for manual portfolio adjustment
     st.subheader('Manual Portfolio Adjustment')
@@ -103,7 +166,7 @@ if stocks_df is not None:
     if total_weight != 0:
         weights = {k: v / total_weight for k, v in weights.items()} # normalize weights
     else:
-        st.write("Sum of weights is zero. Please enter non-zero weights.")
+        st.write("Sum of weights is zero. Please enter non-zero weights which add up to 1.")
 
     
     weights_df = pd.DataFrame.from_dict(weights, orient = 'index')
@@ -151,15 +214,6 @@ if stocks_df is not None:
     # Format the drawdown duration
     drawdown_duration_str = str(drawdown_duration) + " days"
     
-    # Slider to adjust the risk free rate for the sharpe ratio 
-    risk_free_rate = st.slider(
-        'Adjust realistic Risk-Free Rate for Sharpe Ratio',
-        min_value=0.0,
-        max_value=0.1,
-        value=0.02,
-        step=0.01
-        )
-    
     # Calculate sharpe ratio 
     portfolio_returns = stocks_df['Manually Adjusted Portfolio'].pct_change()
     portfolio_volatility = portfolio_returns.std() * (252 ** 0.5)  # Assuming 252 trading days in a year
@@ -191,7 +245,7 @@ if stocks_df is not None:
     fig_cum_returns = plot_cum_returns(stocks_df['Manually Adjusted Portfolio'], 'Cumulative Returns of Portfolio Starting with $100')
     # Display the plot of cumulative returns
     st.plotly_chart(fig_cum_returns)
-
+    
 else:
     st.write("No data available for the selected stocks.")
 
@@ -199,233 +253,46 @@ else:
 # Add a line to separate subheaders
 st.markdown("<hr>", unsafe_allow_html=True)
 
+# Display explanations of performance measures for the portfolio
+explanations = {
+    "Average Annual Portfolio Return": "Average annual portfolio return calculates the average percentage gain or loss of a portfolio over a timeframe, representing the annualized performance of the investment.",
+    "Average Annual Portfolio Volatility": "Average annual portfolio volatility measures the fluctuation or variability of a portfolio's returns over a timeframe, quantifying the degree of risk associated with the portfolio.",
+    "Standard Deviation": "Standard deviation in a portfolio measures the dispersion or variability of the portfolio's returns from its average return, providing a measure of the portfolio's risk.",
+    "Downside Deviation": "Downside deviation in a portfolio measures the dispersion or variability of the portfolio's negative returns from its average negative return, focusing on downside risk.",
+    "Maximum Drawdown": "Maximum drawdown measures the largest percentage decline from a portfolio's peak value to its lowest point, giving an idea of the portfolio's risk and potential losses.",
+    "Drawdown Duration": "Drawdown duration measures the time it takes for an investment or portfolio to recover from a decline and reach its previous peak value, providing insight into its recovery period.",
+    "Sharpe Ratio": "The Sharpe Ratio is a measure of risk-adjusted return that quantifies the excess return earned per unit of risk taken by an investment or portfolio."
+}
 
-# Display explanations for better understanding the past performance measures 
 st.subheader("Explanation of Performance Measures")
 st.write("Use this section if you don't fully understand the Performance Measures which have been used to determine the performance of your portfolio.")
 
-# Add explanation for average annual portfolio return 
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Average Annual Portfolio Return")
+# Iterate through each measure and its corresponding explanation
+for measure, explanation in explanations.items():
+    show_info = False
+    close_info = False
+    drawdown_header = st.empty()
+    drawdown_header.write(measure)
 
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button1 = button_col1.button("Explanation of Average Annual Portfolio Return", key="info_button1")
+    # Create two columns for the info button and close button
+    button_col1, button_col2 = st.columns(2)
+    info_button = button_col1.button(f"Explanation of {measure}", key=f"info_button_{measure}")
 
-# Display information or the initial layout based on button click
-if info_button1:
-    show_info = True
+    if info_button:
+        show_info = True
 
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Average annual portfolio return calculates the average percentage gain or loss of a portfolio over a year, representing the annualized performance of the investment. It provides a measure of the portfolio's average profitability or loss on an annual basis, helping investors evaluate the performance and potential returns of their investment.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
+    if show_info:
+        # Display the explanation when the info button is clicked
+        drawdown_header.empty()
+        st.write(explanation)
+        close_info = button_col2.button("Close", key="close_info")
+        if close_info:
+            show_info = False
 
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Average Annual Portfolio Return")
+    if not show_info and not close_info:
+        # Display the measure name if the explanation is not shown
+        drawdown_header.write(measure)
 
-
-# Add empty subheader for seperation
-st.subheader('')
-
-
-# Add explanation for average annual portfolio volatility
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Average Annual Portfolio Volatility")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button2 = button_col1.button("Explanation of Average Annual Portfolio Volatility", key="info_button2")
-
-# Display information or the initial layout based on button click
-if info_button2:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Average annual portfolio volatility measures the fluctuation or variability of a portfolio's returns over a year. It quantifies the degree of risk associated with the portfolio and provides insights into its potential price movements and stability.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Average Annual Portfolio Volatility")
-
-
-# Add empty subheader for seperation
-st.subheader('')
-
-
-# Add explanation for standard deviation
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Standard Deviation")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button3 = button_col1.button("Explanation of Standard Deviation", key="info_button3")
-
-# Display information or the initial layout based on button click
-if info_button3:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Standard deviation in a portfolio measures the dispersion or variability of the portfolio's returns from its average return. It provides a measure of the portfolio's risk by indicating how much the individual returns deviate from the average, helping investors assess the potential volatility of their investment.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Standard Deviation")
-
-
-# Add empty subheader for seperation
-st.subheader('')
-
-
-# Add explanation for downside deviation
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Downside Deviation")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button4 = button_col1.button("Explanation of Downside Deviation", key="info_button4")
-
-# Display information or the initial layout based on button click
-if info_button4:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Downside deviation in a portfolio measures the dispersion or variability of the portfolio's negative returns from its average negative return. It focuses specifically on downside risk by quantifying the extent to which the portfolio's returns deviate below the average, providing investors with insight into the potential downside volatility of their investment.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Downside Deviation")
-
-
-# Add empty subheader for seperation
-st.subheader('')
-
-# Add explanation for maximum drawdown 
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Maximum Drawdown")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button5 = button_col1.button("Explanation of Maximum Drawdown", key="info_button5")
-
-# Display information or the initial layout based on button click
-if info_button5:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Maximum drawdown measures the largest percentage decline from a portfolio's peak value to its lowest point. It gives an idea of the portfolio's risk and potential losses.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Maximum Drawdown")
-
-
-# Add empty subheader for seperation
-st.subheader('')
-
-
-# Add explanation for drawdown duration
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Drawdown Duration")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button6 = button_col1.button("Explanation of Drawdown Duration", key="info_button6")
-
-# Display information or the initial layout based on button click
-if info_button6:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("Drawdown duration measures the time it takes for an investment or portfolio to recover from a decline and reach its previous peak value. It provides insight into how long an investment remains below its previous high and helps assess its recovery period.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Drawdown Duration")
-
-
-# Add empty subheader for seperation
-st.subheader('')
-
-
-# Add explanation for sharpe ratio 
-# Define the initial layout
-show_info = False
-close_info = False
-# Display the heading and info button
-drawdown_header = st.empty()
-drawdown_header.write("Sharpe Ratio")
-
-# Create a column layout for buttons
-button_col1, button_col2 = st.columns(2)
-info_button7 = button_col1.button("Explanation of Sharpe Ratio", key="info_button7")
-
-# Display information or the initial layout based on button click
-if info_button7:
-    show_info = True
-
-if show_info:
-    # Display the information text
-    drawdown_header.empty()
-    st.write("The Sharpe Ratio is a measure of risk-adjusted return that quantifies the excess return earned per unit of risk taken by an investment or portfolio. It compares the return of the investment above a risk-free rate to the volatility of the investment, providing investors with a metric to evaluate the efficiency of an investment in generating returns relative to its risk.")
-    close_info = button_col2.button("Close", key="close_info")
-    if close_info:
-        show_info = False
-
-# Display the initial layout when info is not shown
-if not show_info and not close_info:
-    drawdown_header.write("Sharpe Ratio")
+    # Add a subheader separator after each measure's explanation
+    st.subheader('')
 
