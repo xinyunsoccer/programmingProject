@@ -35,7 +35,7 @@ TODAY = date.today().strftime('%Y-%m-%d')
 
 
 # Prompt the user to enter stock tickers separated by commas and convert them to uppercase
-tickers_string = st.text_input('Enter all stock tickers to be included in portfolio separated by commas, e.g. "MA,FB,V,AMZN,JPM,BA."', '').upper()
+tickers_string = st.text_input('Enter all stock tickers to be included in portfolio separated by commas, e.g. "MSFT, GOOG, META, AAPL."', '').upper()
 
 # Split the tickers string using commas to create a list of tickers
 tickers = tickers_string.split(',')
